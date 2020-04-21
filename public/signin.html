@@ -1,0 +1,30 @@
+<html>
+	<head>
+        <link rel="stylesheet" type="text/css" href="css" />
+        <title>Sign In</title>
+    </head>
+    <body>
+        <div id="container">
+            <div id="header">
+                <h1>Sign In</h1><br>
+            </div>
+
+            <form action="/loginhandler/" method="post" id="form">
+                Username: <input type="text" name="username"><br>
+                Password: <input type="password" name="password"><br>
+
+                <div id="status"></div>
+                <script type="text/javascript">
+                    document.write(qs("issue"));
+                </script>
+                <div id="submit">
+                    <input type="submit" value="Sign In!">
+                </div>
+                </form>
+            </div>
+
+        </div>  
+     
+
+        </body>
+</html>
