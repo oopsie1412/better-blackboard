@@ -1,5 +1,5 @@
 # better-blackboard
-better-blackboard
+Improvement over blackboard software
 
 
 ## Plans:
