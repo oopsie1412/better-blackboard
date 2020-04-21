@@ -1,7 +1,8 @@
-// Generate random room name if needed
+// Generate random room hash for url
 if (!location.hash) {
   location.hash = Math.floor(Math.random() * 0xFFFFFF).toString(16);
 }
+//creates room hash for url and defines scaledrone room contat
 const roomHash = location.hash.substring(1);
 const drone = new ScaleDrone('cU9z7ev26H7O3P2f');
 const roomName = 'observable-' + roomHash;
@@ -30,6 +31,7 @@ drone.on('open', error => {
     }
   });
 
+  //only starts webrtc when there are at least 2 members
   room.on('members', members => {
     console.log('MEMBERS', members);
     
@@ -75,7 +77,7 @@ function startWebRTC(isOfferer) {
     video: true,
   }).then(stream => {
     localVideo.srcObject = stream;
-    stream.getTracks().forEach(track => pc.addTrack(track, stream));
+    stream.getTracks().forEach(track => pc.addTrack(track, stream)); //defines stream tracks
   }, onError);
 
   // Listen to signaling data from Scaledrone
@@ -109,45 +111,36 @@ function localDescCreated(desc) {
   );
 }
 
+//defines muting variables and unmutes everything by defaul
 var localMuted = false;
 var remoteMuted = false;
 var lVideoOff = false;
 var foobar = false;
 
+//mute local audio
 function muteLocal() {
   localMuted = !localMuted;
   console.log('Muting local', localMuted);
   localVideo.srcObject.getTracks()[0].enabled = localMuted;
 }
 
+//mute remote audio
 function muteRemote() {
   remoteMuted = !remoteMuted;
   console.log('Muting remote', remoteMuted);
   remoteVideo.srcObject.getTracks()[0].enabled = remoteMuted;
 }
 
+//stop showing local video
 function lVideoMute() {
   lVideoOff = !lVideoOff;
   console.log('disabling local video', lVideoOff);
   localVideo.srcObject.getVideoTracks()[0].enabled = lVideoOff;
 }
-
+//stop showing remote video
 function rVideoMute() {
   rVideoOff = !rVideoOff;
   console.log('disabling remote video', rVideoOff);
   rocalVideo.srcObject.getVideoTracks()[0].enabled = rVideoOff;
 }
 
-/*
-  function lVideo() {
-    lVideoOff = !lVideoOff;
-    console.log(remoteVideo);
-  
-    if (lVideoOff) {
-      //localVideo.srcObject = "";
-      console.log('lVideoOff', lVideoOff);
-    } else {
-      localVideo.srcObject = stream;
-    }
-  }
-*/
