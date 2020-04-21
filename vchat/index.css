@@ -8,7 +8,7 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   }
   video {
-    max-width: calc(100%-50px);
+    max-width: calc(50%-200px);
     margin: 0 50px;
     box-sizing: border-box;
     border-radius: 2px;
