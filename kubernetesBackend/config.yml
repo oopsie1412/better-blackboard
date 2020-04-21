@@ -1,5 +1,0 @@
-db:
-    user:     betterbb
-    password: PlsDontSue
-    port:     5432
-    IP:       127.0.0.1
