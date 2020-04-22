@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/fcgi"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -139,6 +140,27 @@ func signUpHandler(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	hasCaptal, err := regexp.MatchString(`[A-Z]`, password)
+	if err != nil {
+		ErrorHandler(resp, req, 400, "RegExp error, please try again")
+		return
+	}
+	hasNumber, err := regexp.MatchString(`\d`, password)
+	if err != nil {
+		ErrorHandler(resp, req, 400, "RegExp error, please try again")
+		return
+	}
+	hasSymbol, err := regexp.MatchString(`\W`, password)
+	if err != nil {
+		ErrorHandler(resp, req, 400, "RegExp error, please try again")
+		return
+	}
+
+	if !(hasCaptal && hasNumber && hasSymbol && len(password) >= 8) {
+		ErrorHandler(resp, req, 400, "Password must be Longer than 8 characters, and have atleast 1 symbol, 1 number, and 1 capital letter.")
+		return
+	}
+
 	/*secure, err := regexp.MatchString(`^([A-Z].*[A-Z])([~/!@#$&*])([0-9].*[0-9])([a-z][a-z][a-z]).{8,}$`, password)
 	if err != nil {
 		ErrorHandler(resp, req, 500, "Internal Error, please try again")
@@ -150,7 +172,7 @@ func signUpHandler(resp http.ResponseWriter, req *http.Request) {
 		return
 	}*/
 
-	err := stmtMap["checkForUniqueUsername"].QueryRow(username, email).Scan()
+	err = stmtMap["checkForUniqueUsername"].QueryRow(username, email).Scan()
 	switch err {
 	case sql.ErrNoRows, nil:
 	default:
@@ -176,10 +198,6 @@ func signUpHandler(resp http.ResponseWriter, req *http.Request) {
 		ErrorHandler(resp, req, 500, "Error creating account")
 		return
 	}
-
-	// success
-
-	fmt.Sprintln(resp, "Success")
 
 }
 
