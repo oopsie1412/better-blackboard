@@ -7,4 +7,5 @@ Improvement over blackboard software
 - Golang backend
 - WebRTC calling (see oopsie1412/vchat) [currently limited to two users but more should come soon]
 - RSS based (TBD)
-- decent level of privacy
+- Privacy
+- Secure Logins
