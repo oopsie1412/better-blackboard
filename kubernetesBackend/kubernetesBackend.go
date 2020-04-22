@@ -62,8 +62,9 @@ var (
 )
 
 const (
-	alphabet   = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	bcryptCost = 15
+	alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	//This is the number of rounds that occur every time you compute the key
+	bcryptCost = 12
 )
 
 func main() {
@@ -215,9 +216,7 @@ func LoginHandler(resp http.ResponseWriter, req *http.Request) {
 	user := req.FormValue("username")
 	password := req.FormValue("password")
 	_, ok := checkKey(resp, req, &password, &user, true)
-	if ok {
-		http.Redirect(resp, req, "/", http.StatusTemporaryRedirect)
-	} else {
+	if !ok {
 		http.Redirect(resp, req, "/login"+"?issue=BadUserPass", http.StatusTemporaryRedirect)
 		return
 	}
@@ -236,12 +235,15 @@ func (h newFCGI) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	log.Tracef("URLSplit: %v", urlSplit)
 
 	switch urlSplit[1] {
+	case "":
+		http.ServeFile(resp, req, "../public/index.html")
 	case "signup":
 		http.ServeFile(resp, req, "../public/signup.html")
 	case "css":
 		http.ServeFile(resp, req, "../public/global.css")
 	case "signuphandler":
 		signUpHandler(resp, req)
+		http.Redirect(resp, req, "/", http.StatusTemporaryRedirect)
 	case "logout", "signout":
 		sessions.DeleteKeySite(resp, req, stmtMap)
 		http.Redirect(resp, req, "/", http.StatusTemporaryRedirect)
@@ -249,6 +251,7 @@ func (h newFCGI) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 		http.ServeFile(resp, req, "../public/signin.html")
 	case "loginhandler":
 		LoginHandler(resp, req)
+		http.Redirect(resp, req, "/", http.StatusTemporaryRedirect)
 	case "verifysession":
 		var user string
 		ok, err := sessions.Verify(resp, req, stmtMap, &user)
