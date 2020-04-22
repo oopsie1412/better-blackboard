@@ -9,13 +9,14 @@ import (
 	"net"
 	"net/http"
 	"net/http/fcgi"
+	"os"
 	"regexp"
 	"strings"
 	"sync"
 
-	sessions "./sessions"
 	"github.com/gidoBOSSftw5731/log"
 	"github.com/jinzhu/configor"
+	sessions "github.com/oopsie1412/better-blackboard/kubernetesBackend/sessions"
 	"golang.org/x/crypto/bcrypt"
 
 	//pq is imported because below is a psql db that is made
@@ -38,6 +39,7 @@ type hashes struct {
 }
 
 var (
+	cwd, _ = os.Getwd()
 	Config struct {
 		DB struct {
 			User     string `default:"betterbb"`
@@ -69,6 +71,7 @@ const (
 )
 
 func main() {
+	//println(cwd)
 	log.SetCallDepth(4)
 	configor.Load(&Config, "config.yml")
 
