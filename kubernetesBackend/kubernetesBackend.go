@@ -9,12 +9,14 @@ import (
 	"net"
 	"net/http"
 	"net/http/fcgi"
+	"os"
+	"regexp"
 	"strings"
 	"sync"
 
-	sessions "./sessions"
 	"github.com/gidoBOSSftw5731/log"
 	"github.com/jinzhu/configor"
+	sessions "github.com/oopsie1412/better-blackboard/kubernetesBackend/sessions"
 	"golang.org/x/crypto/bcrypt"
 
 	//pq is imported because below is a psql db that is made
@@ -37,6 +39,7 @@ type hashes struct {
 }
 
 var (
+	cwd, _ = os.Getwd()
 	Config struct {
 		DB struct {
 			User     string `default:"betterbb"`
@@ -62,11 +65,13 @@ var (
 )
 
 const (
-	alphabet   = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	bcryptCost = 15
+	alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	//This is the number of rounds that occur every time you compute the key
+	bcryptCost = 12
 )
 
 func main() {
+	//println(cwd)
 	log.SetCallDepth(4)
 	configor.Load(&Config, "config.yml")
 
@@ -138,6 +143,27 @@ func signUpHandler(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	hasCaptal, err := regexp.MatchString(`[A-Z]`, password)
+	if err != nil {
+		ErrorHandler(resp, req, 400, "RegExp error, please try again")
+		return
+	}
+	hasNumber, err := regexp.MatchString(`\d`, password)
+	if err != nil {
+		ErrorHandler(resp, req, 400, "RegExp error, please try again")
+		return
+	}
+	hasSymbol, err := regexp.MatchString(`\W`, password)
+	if err != nil {
+		ErrorHandler(resp, req, 400, "RegExp error, please try again")
+		return
+	}
+
+	if !(hasCaptal && hasNumber && hasSymbol && len(password) >= 8) {
+		ErrorHandler(resp, req, 400, "Password must be Longer than 8 characters, and have atleast 1 symbol, 1 number, and 1 capital letter.")
+		return
+	}
+
 	/*secure, err := regexp.MatchString(`^([A-Z].*[A-Z])([~/!@#$&*])([0-9].*[0-9])([a-z][a-z][a-z]).{8,}$`, password)
 	if err != nil {
 		ErrorHandler(resp, req, 500, "Internal Error, please try again")
@@ -149,7 +175,7 @@ func signUpHandler(resp http.ResponseWriter, req *http.Request) {
 		return
 	}*/
 
-	err := stmtMap["checkForUniqueUsername"].QueryRow(username, email).Scan()
+	err = stmtMap["checkForUniqueUsername"].QueryRow(username, email).Scan()
 	switch err {
 	case sql.ErrNoRows, nil:
 	default:
@@ -175,10 +201,6 @@ func signUpHandler(resp http.ResponseWriter, req *http.Request) {
 		ErrorHandler(resp, req, 500, "Error creating account")
 		return
 	}
-
-	// success
-
-	fmt.Sprintln(resp, "Success")
 
 }
 
@@ -215,9 +237,7 @@ func LoginHandler(resp http.ResponseWriter, req *http.Request) {
 	user := req.FormValue("username")
 	password := req.FormValue("password")
 	_, ok := checkKey(resp, req, &password, &user, true)
-	if ok {
-		http.Redirect(resp, req, "/", http.StatusTemporaryRedirect)
-	} else {
+	if !ok {
 		http.Redirect(resp, req, "/login"+"?issue=BadUserPass", http.StatusTemporaryRedirect)
 		return
 	}
@@ -236,12 +256,15 @@ func (h newFCGI) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	log.Tracef("URLSplit: %v", urlSplit)
 
 	switch urlSplit[1] {
+	case "":
+		http.ServeFile(resp, req, "../public/index.html")
 	case "signup":
 		http.ServeFile(resp, req, "../public/signup.html")
 	case "css":
 		http.ServeFile(resp, req, "../public/global.css")
 	case "signuphandler":
 		signUpHandler(resp, req)
+		http.Redirect(resp, req, "/", http.StatusTemporaryRedirect)
 	case "logout", "signout":
 		sessions.DeleteKeySite(resp, req, stmtMap)
 		http.Redirect(resp, req, "/", http.StatusTemporaryRedirect)
@@ -249,6 +272,7 @@ func (h newFCGI) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 		http.ServeFile(resp, req, "../public/signin.html")
 	case "loginhandler":
 		LoginHandler(resp, req)
+		http.Redirect(resp, req, "/", http.StatusTemporaryRedirect)
 	case "verifysession":
 		var user string
 		ok, err := sessions.Verify(resp, req, stmtMap, &user)

@@ -78,7 +78,7 @@ func New(resp http.ResponseWriter, req *http.Request, stmtMap map[string]*sql.St
 	switch {
 	case err == sql.ErrNoRows:
 		log.Debug("New session, adding..")
-		_, err := stmtMap["insertNewSession"].Exec(session, expiration, req.FormValue("user"))
+		_, err := stmtMap["insertNewSession"].Exec(session, expiration, req.FormValue("username"))
 		if err != nil {
 			log.Error(err)
 			return err
@@ -110,10 +110,10 @@ func Verify(resp http.ResponseWriter, req *http.Request, stmtMap map[string]*sql
 	err := stmtMap["checkSessionExpiry"].QueryRow(cookie.Value).Scan(&expr, user)
 	switch {
 	case err != nil:
-		log.Errorln("File not in db..")
+		log.Errorln("session not in db..")
 		return false, fmt.Errorf("INVALID")
 	default:
-		log.Traceln("Found a key")
+		log.Traceln("Found a session")
 	}
 	/*
 		if ip != getClientIP(req) {

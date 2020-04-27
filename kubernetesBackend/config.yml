@@ -1,0 +1,5 @@
+db:
+    user:     betterbb
+    password: PlsDontSue
+    port:     5432
+    IP:       host.docker.internal
